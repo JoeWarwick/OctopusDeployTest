@@ -6,10 +6,7 @@ namespace OctopusDeployTest
     {
         int NumKeep { get; set; }
 
-        bool ProcessProjects();
-        bool ProcessReleases();
-        bool ProcessEnvironments();
-        bool ProcessDeployments();
+        bool ProcessProjects();  
         void LogError(string message, string[] args);
         JObject ReadJson(ReleaseType rtype);
     }

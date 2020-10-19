@@ -17,25 +17,12 @@ namespace OctopusDeployTest
         {
             this.logger = logger;
         }
-        public bool ProcessProjects()
-        {
-            JObject projects = ReadJson(ReleaseType.Project);
-            return true;
-        }
+        
         public bool ProcessReleases()
         {
-            JObject releases = ReadJson(ReleaseType.Release);
-            return true;
-        }
-
-        public bool ProcessEnvironments()
-        {
             JObject environments = ReadJson(ReleaseType.Environment);
-            return true;
-        }
-
-        public bool ProcessDeployments()
-        {
+            JObject projects = ReadJson(ReleaseType.Project);
+            JObject releases = ReadJson(ReleaseType.Release);
             JObject deployments = ReadJson(ReleaseType.Deployment);
             return true;
         }
