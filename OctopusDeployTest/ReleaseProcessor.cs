@@ -4,7 +4,6 @@ using OctopusDeployTest.Models;
 using System;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
 
 using Environment = OctopusDeployTest.Models.Environment;
 
@@ -29,71 +28,59 @@ namespace OctopusDeployTest
             var deployments = ReadJson<Deployment[]>(ReleaseType.Deployment);
 
 
-            // Project the needed moodels joined
-            var releasedeployments = releases.Select(release => new
-            {
-                ReleaseId = release.Id,
-                ProjectName = projects.FirstOrDefault(project => project.Id == release.ProjectId)?.Name,
-                Version = release.Version ?? "unversioned",
-                Deployments = deployments.Where(deployment => deployment.ReleaseId == release.Id)
-                    .OrderBy(deployment => deployment.DeployedAt)
-                    .Select(deployment => new
-                    {
-                        Environment = environments.FirstOrDefault(environment => environment.Id == deployment.EnvironmentId)?.Name,
-                        Deployment = deployment
-                    }),
-                LatestDeploymentAt = deployments.Where(deployment => deployment.ReleaseId == release.Id)
-                    .OrderBy(deployment => deployment.DeployedAt).FirstOrDefault()?.DeployedAt,
-            });
+            // Project the needed moodels into a denormalised set
+            var releasedeployments = releases.OrderByDescending(release => release.Created)
+                .SelectMany(release => deployments.Where(deployment => deployment.ReleaseId == release.Id)
+                .Select(deployment => new
+                {
+                    ReleaseId = release.Id,
+                    ProjectName = projects.FirstOrDefault(project => project.Id == release.ProjectId)?.Name,
+                    Environment = environments.FirstOrDefault(environment => environment.Id == deployment.EnvironmentId)?.Name ?? release.ProjectId,
+                    Version = release.Version ?? "unversioned",
+                    Deployment = deployment
+                }));
 
             var intTotalStagingBytesReclaimed = 0;
             var intTotalProductionBytesReclaimed = 0;
 
             // Keep [NumKeep] Staging releases
-            var stagingset = releasedeployments.Where(rd => rd.Deployments.Any(deployment => deployment.Environment == "Staging"))
-                .Take(NumKeep);            
+            // ** delete non listed projects? E.G. Project-3 is not existent in the list of projects so when the project name is not found. Should it's deployment will also be deleted?
+            var stagingset = releasedeployments.Where(rd => rd.Environment == "Staging")
+                .GroupBy(rd => rd.ProjectName)
+                .SelectMany(rd => rd.Take(NumKeep));            
 
             // Delete logs and artifacts of each deleted Staging release
             foreach(var rd in stagingset)
             {
-                foreach(var deployment in rd.Deployments.Where(deployment => deployment.Environment == "Staging"))
-                {
-                    int szlogs = deployment.Deployment.DeleteLogs();
-                    int szartifacts = deployment.Deployment.DeleteArtifacts();
-                    intTotalStagingBytesReclaimed += szlogs + szartifacts;
-                }
+                int szlogs = rd.Deployment.DeleteLogs();
+                int szartifacts = rd.Deployment.DeleteArtifacts();
+                intTotalStagingBytesReclaimed += szlogs + szartifacts;
+            }
+            
+            // Keep [NumKeep] Production releases
+            var productionset = releasedeployments.Where(rd => rd.Environment == "Production")
+                .GroupBy(rd => rd.ProjectName)
+                .SelectMany(rd => rd.Take(NumKeep));
+
+            foreach (var rd in productionset)
+            {
+                int szlogs = rd.Deployment.DeleteLogs();
+                int szartifacts = rd.Deployment.DeleteArtifacts();
+                intTotalProductionBytesReclaimed += szlogs + szartifacts;
             }
 
             var keptReleases = stagingset.Select(ss => new KeptRelease
             {
                 ReleaseId = ss.ReleaseId,
-                EnvironmentName = "Staging",
+                EnvironmentName = ss.Environment,
                 ProjectName = ss.ProjectName,
-                LastDeployDate = ss.LatestDeploymentAt??DateTime.MinValue,
-                Version = ss.Version                
-            });
-
-            // Keep [NumKeep] Production releases
-            var productionset = releasedeployments.Where(rd => rd.Deployments.Any(deployment => deployment.Environment == "Production"))
-                .Take(NumKeep);
-
-            foreach (var rd in productionset)
-            {
-                foreach (var deployment in rd.Deployments.Where(deployment => deployment.Environment == "Production"))
-                {
-                    int szlogs = deployment.Deployment.DeleteLogs();
-                    int szartifacts = deployment.Deployment.DeleteArtifacts();
-                    intTotalProductionBytesReclaimed += szlogs + szartifacts;
-                }
-            }
-   
-            keptReleases = keptReleases.Concat(productionset.Select(ss => new KeptRelease
-            {
-                ReleaseId = ss.ReleaseId,
-                EnvironmentName = "Production",
-                ProjectName = ss.ProjectName,
-                LastDeployDate = ss.LatestDeploymentAt??DateTime.MinValue,
                 Version = ss.Version
+            }).Concat(productionset.Select(ps => new KeptRelease
+            {
+                ReleaseId = ps.ReleaseId,
+                EnvironmentName = ps.Environment,
+                ProjectName = ps.ProjectName,
+                Version = ps.Version
             }));
 
             LogMessage($"Deleted a total of {intTotalStagingBytesReclaimed} bytes from Staging deployments.");

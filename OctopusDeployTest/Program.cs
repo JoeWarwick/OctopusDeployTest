@@ -21,7 +21,7 @@ namespace OctopusDeployTest
                
                 string output = processor.ProcessReleases();
                 processor.LogMessage($"The run was successful. Here are the kept releases:");
-                Console.Write(output);
+                processor.LogMessage(output);
             }
             else
             {
