@@ -8,5 +8,6 @@ namespace OctopusDeployTest.Models
         public string ProjectName { get; set; }
         public string EnvironmentName { get; set; }
         public string Version { get; set; }
+        public DateTime DeployedAt { get; set; }
     }
 }

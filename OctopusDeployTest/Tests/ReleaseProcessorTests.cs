@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using OctopusDeployTest.Models;
+using System;
 
 namespace OctopusDeployTest.Tests
 {
@@ -25,35 +26,40 @@ namespace OctopusDeployTest.Tests
                     ReleaseId = "Release-7",
                     ProjectName = "Pet Shop",
                     EnvironmentName = "Staging",
-                    Version = "1.0.3"
+                    Version = "1.0.3",
+                    DeployedAt = DateTime.Parse("2000-01-02T13:00:00")
                 },
                 new KeptRelease
                 {
                     ReleaseId = "Release-2",
                     ProjectName = "Random Quotes",
                     EnvironmentName = "Staging",
-                    Version = "1.0.1"
+                    Version = "1.0.1",
+                    DeployedAt = DateTime.Parse("2000-01-02T10:00:00")
                 },
                 new KeptRelease
                 {
                     ReleaseId = "Release-8",
-                    ProjectName = "Project - 3",
+                    ProjectName = "Project-3",
                     EnvironmentName = "Staging",
-                    Version = "2.0.0"
+                    Version = "2.0.0",
+                    DeployedAt = DateTime.Parse("2000-01-01T10:00:00")
                 },
                 new KeptRelease
                 {
                     ReleaseId = "Release-8",
                     ProjectName = "Pet Shop",
                     EnvironmentName = "Production",
-                    Version = "1.0.2"
+                    Version = "1.0.2",
+                    DeployedAt = DateTime.Parse("2000-01-02T11:00:00")
                 },
                 new KeptRelease
                 {
                     ReleaseId = "Release-1",
                     ProjectName = "Random Quotes",
                     EnvironmentName = "Production",
-                    Version = "1.0.0"
+                    Version = "1.0.0",
+                    DeployedAt = DateTime.Parse("2000-01-02T11:00:00")
                 }
             };
 

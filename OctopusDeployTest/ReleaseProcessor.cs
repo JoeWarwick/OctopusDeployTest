@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using OctopusDeployTest.Models;
-using System;
 using System.IO;
 using System.Linq;
 
@@ -34,8 +33,8 @@ namespace OctopusDeployTest
                 .Select(deployment => new
                 {
                     ReleaseId = release.Id,
-                    ProjectName = projects.FirstOrDefault(project => project.Id == release.ProjectId)?.Name,
-                    Environment = environments.FirstOrDefault(environment => environment.Id == deployment.EnvironmentId)?.Name ?? release.ProjectId,
+                    ProjectName = projects.FirstOrDefault(project => project.Id == release.ProjectId)?.Name ?? release.ProjectId,
+                    Environment = environments.FirstOrDefault(environment => environment.Id == deployment.EnvironmentId)?.Name,
                     Version = release.Version ?? "unversioned",
                     Deployment = deployment
                 }));
@@ -74,13 +73,16 @@ namespace OctopusDeployTest
                 ReleaseId = ss.ReleaseId,
                 EnvironmentName = ss.Environment,
                 ProjectName = ss.ProjectName,
-                Version = ss.Version
+                Version = ss.Version,
+                DeployedAt = ss.Deployment.DeployedAt
+
             }).Concat(productionset.Select(ps => new KeptRelease
             {
                 ReleaseId = ps.ReleaseId,
                 EnvironmentName = ps.Environment,
                 ProjectName = ps.ProjectName,
-                Version = ps.Version
+                Version = ps.Version,
+                DeployedAt = ps.Deployment.DeployedAt
             }));
 
             LogMessage($"Deleted a total of {intTotalStagingBytesReclaimed} bytes from Staging deployments.");
