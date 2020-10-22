@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "OctopusDeployTest": {
+      "commandName": "Project",
+      "commandLineArgs": "3"
+    }
+  }
+}

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using OctopusDeployTest.Models;
 
 namespace OctopusDeployTest
 {
@@ -6,8 +7,9 @@ namespace OctopusDeployTest
     {
         int NumKeep { get; set; }
 
-        bool ProcessProjects();  
+        string ProcessReleases();  
         void LogError(string message, string[] args);
-        JObject ReadJson(ReleaseType rtype);
+        T ReadJson<T>(ReleaseType rtype);
+        void LogMessage(string message);
     }
 }

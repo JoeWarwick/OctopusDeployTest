@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Linq;
 
 namespace OctopusDeployTest
@@ -12,14 +13,15 @@ namespace OctopusDeployTest
             ConfigureServices(serviceCollection);
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
-            var processor = serviceProvider.GetService<IReleaseProcessor>();
+            var processor = serviceProvider.GetService<ReleaseProcessor>();
             if (args.Count() >= 1 && int.TryParse(args[0], out int numKeep))
             {
+                processor.LogMessage($"Welcome to the Release Retention Tool. It will remove release artifacts and logs that are older than the first {numKeep} staging or production releases.");
                 processor.NumKeep = numKeep;
-                processor.ProcessProjects();
-                processor.ProcessDeployments();
-                processor.ProcessEnvironments();
-                processor.ProcessReleases();
+               
+                string output = processor.ProcessReleases();
+                processor.LogMessage($"The run was successful. Here are the kept releases:");
+                Console.Write(output);
             }
             else
             {
@@ -30,7 +32,7 @@ namespace OctopusDeployTest
         private static void ConfigureServices(IServiceCollection services)
         {
             services.AddLogging(configure => configure.AddConsole())
-                .AddTransient<IReleaseProcessor>();
+                .AddTransient<ReleaseProcessor>();
         }
     }
 }
